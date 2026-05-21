@@ -17,22 +17,32 @@ const GENRE_ICONS = {
 const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) => {
   const listRef = useRef(null)
 
-  // TODO (Persona 3): implementar el filtro y ordenamiento
-  // Pasos:
-  //  1. filter: 'watched' → solo m.watched | 'pending' → !m.watched
-  //  2. genre:  !== 'all' → m.genre === genre
-  //  3. search: buscar en m.title.toLowerCase() si search no está vacío
-  //  4. sort:   'rating' → b.rating-a.rating | 'title-asc' → localeCompare | 'title-desc' → invertido
+  // Filtro + búsqueda + orden memoizado: sólo recalcula cuando cambia alguna dep
   const processedMovies = useMemo(() => {
-    return movies
+    let list = movies
+
+    if (filter === 'watched') list = list.filter((m) => m.watched)
+    else if (filter === 'pending') list = list.filter((m) => !m.watched)
+
+    if (genre !== 'all') list = list.filter((m) => m.genre === genre)
+
+    const term = search.trim().toLowerCase()
+    if (term) list = list.filter((m) => m.title.toLowerCase().includes(term))
+
+    const sorted = [...list]
+    if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating)
+    else if (sort === 'title-asc') sorted.sort((a, b) => a.title.localeCompare(b.title))
+    else if (sort === 'title-desc') sorted.sort((a, b) => b.title.localeCompare(a.title))
+
+    return sorted
   }, [movies, filter, genre, sort, search])
 
   const handleRemove = useCallback((id) => onRemove(id), [onRemove])
   const handleToggle = useCallback((id) => onToggle(id), [onToggle])
 
-  // TODO (Persona 3): useEffect — scroll al top cuando se agrega una película
+  // Scroll al top cuando se agrega/elimina una película
   useEffect(() => {
-    // listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    listRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' })
   }, [movies.length])
 
   if (processedMovies.length === 0) {

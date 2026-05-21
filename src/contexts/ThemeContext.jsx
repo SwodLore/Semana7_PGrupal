@@ -1,25 +1,24 @@
 // ============================================================
 // PERSONA 2 — Ingeniero de Efectos & Contexto
 // Hooks: useContext, useEffect, useState
+// Persona 4 (QA) integró useLocalStorage para consumir el custom hook.
 // ============================================================
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 export const ThemeContext = createContext()
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem('theme') || 'light'
-  )
+  // Custom hook: persiste el tema y devuelve [valor, setter] como useState.
+  const [theme, setTheme] = useLocalStorage('theme', 'light')
 
+  // Sincroniza el tema con <body>. Cleanup limpia la clase al desmontar
+  // el provider o al cambiar theme (evita estilos residuales).
   useEffect(() => {
     document.body.className = theme
     return () => {
       document.body.className = ''
     }
-  }, [theme])
-
-  useEffect(() => {
-    localStorage.setItem('theme', theme)
   }, [theme])
 
   const toggleTheme = () => {
