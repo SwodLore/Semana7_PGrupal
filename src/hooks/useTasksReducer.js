@@ -1,9 +1,8 @@
 // ============================================================
 // PERSONA 1 — Arquitecto de Estado
-// TODO: Implementar useReducer completo
+// Hooks: useReducer
 // ============================================================
 
-// TODO: Definir tipos de acción: ADD, REMOVE, TOGGLE, FILTER, SORT
 export const ACTION_TYPES = {
   ADD: 'ADD',
   REMOVE: 'REMOVE',
@@ -20,16 +19,39 @@ export const initialState = {
 
 function tasksReducer(state, action) {
   switch (action.type) {
-    // TODO: Implementar caso ADD — agregar tarea inmutablemente
-    // Pista: { id: Date.now(), title: action.payload, priority: action.priority ?? 'media', done: false }
+    case ACTION_TYPES.ADD:
+      return {
+        ...state,
+        items: [
+          ...state.items,
+          {
+            id: Date.now(),
+            title: action.payload,
+            priority: action.priority ?? 'media',
+            done: false,
+          },
+        ],
+      }
 
-    // TODO: Implementar caso REMOVE — filtrar por id
+    case ACTION_TYPES.REMOVE:
+      return {
+        ...state,
+        items: state.items.filter((item) => item.id !== action.payload),
+      }
 
-    // TODO: Implementar caso TOGGLE — cambiar done del item con action.payload id
+    case ACTION_TYPES.TOGGLE:
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.id === action.payload ? { ...item, done: !item.done } : item
+        ),
+      }
 
-    // TODO: Implementar caso FILTER — cambiar state.filter
+    case ACTION_TYPES.FILTER:
+      return { ...state, filter: action.payload }
 
-    // TODO: Implementar caso SORT — cambiar state.sort
+    case ACTION_TYPES.SORT:
+      return { ...state, sort: action.payload }
 
     default:
       return state
