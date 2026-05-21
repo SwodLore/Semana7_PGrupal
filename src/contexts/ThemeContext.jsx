@@ -1,24 +1,27 @@
-// ============================================================
-// PERSONA 2 — Ingeniero de Efectos & Contexto
-// TODO: Implementar useContext + useEffect
-// ============================================================
 import { createContext, useState, useEffect } from 'react'
 
 export const ThemeContext = createContext()
 
 export const ThemeProvider = ({ children }) => {
-  // TODO: Inicializar estado leyendo localStorage ('theme') o usar 'light' por defecto
-  const [theme, setTheme] = useState('light')
+  // Inicializamos leyendo localStorage; si no hay nada guardado, usamos 'light'
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('theme') || 'light'
+  )
 
-  // TODO: useEffect para aplicar clase al <body> cuando cambie el tema
-  // document.body.className = theme
-  // No olvidar el cleanup: return () => { document.body.className = '' }
+  useEffect(() => {
+    document.body.className = theme
+    return () => {
+      document.body.className = ''
+    }
+  }, [theme])
 
-  // TODO: useEffect para persistir el tema en localStorage cuando cambie
-  // localStorage.setItem('theme', theme)
+  useEffect(() => {
+    localStorage.setItem('theme', theme)
+  }, [theme])
 
-  // TODO: Función toggleTheme que alterne entre 'light' y 'dark'
-  const toggleTheme = () => {}
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
