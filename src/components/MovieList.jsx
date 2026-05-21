@@ -1,6 +1,6 @@
 // ============================================================
 // PERSONA 3 — Optimizador de Rendimiento
-// TODO: completar useMemo (filtro + orden + búsqueda)
+// Hooks: useMemo, useCallback, useRef, useEffect
 // ============================================================
 import { useMemo, useCallback, useRef, useEffect } from 'react'
 
@@ -17,32 +17,32 @@ const GENRE_ICONS = {
 const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) => {
   const listRef = useRef(null)
 
-  // Filtro + búsqueda + orden memoizado: sólo recalcula cuando cambia alguna dep
+  // useMemo: recalcula solo cuando cambia movies, filter, genre, sort o search
   const processedMovies = useMemo(() => {
-    let list = movies
+    const q = search.trim().toLowerCase()
 
-    if (filter === 'watched') list = list.filter((m) => m.watched)
-    else if (filter === 'pending') list = list.filter((m) => !m.watched)
+    const filtered = movies.filter((m) => {
+      if (filter === 'watched' && !m.watched) return false
+      if (filter === 'pending' &&  m.watched) return false
+      if (genre !== 'all' && m.genre !== genre) return false
+      if (q && !m.title.toLowerCase().includes(q)) return false
+      return true
+    })
 
-    if (genre !== 'all') list = list.filter((m) => m.genre === genre)
-
-    const term = search.trim().toLowerCase()
-    if (term) list = list.filter((m) => m.title.toLowerCase().includes(term))
-
-    const sorted = [...list]
-    if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating)
-    else if (sort === 'title-asc') sorted.sort((a, b) => a.title.localeCompare(b.title))
-    else if (sort === 'title-desc') sorted.sort((a, b) => b.title.localeCompare(a.title))
-
-    return sorted
+    return [...filtered].sort((a, b) => {
+      if (sort === 'rating')      return b.rating - a.rating
+      if (sort === 'title-desc')  return b.title.localeCompare(a.title)
+      return a.title.localeCompare(b.title)
+    })
   }, [movies, filter, genre, sort, search])
 
+  // useCallback: referencia estable → evita re-render de cada item
   const handleRemove = useCallback((id) => onRemove(id), [onRemove])
   const handleToggle = useCallback((id) => onToggle(id), [onToggle])
 
-  // Scroll al top cuando se agrega/elimina una película
+  // useEffect: scroll suave al agregar nueva película
   useEffect(() => {
-    listRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' })
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [movies.length])
 
   if (processedMovies.length === 0) {
@@ -51,52 +51,57 @@ const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) 
 
   return (
     <ul className="movie-list" ref={listRef}>
-      {processedMovies.map((movie) => (
-        <li
-          key={movie.id}
-          className={`movie-card ${movie.watched ? 'watched' : ''}`}
-          style={{ '--genre-color': GENRE_COLORS[movie.genre] ?? '#6366f1' }}
-        >
-          {/* Poster */}
-          <div className="movie-poster">
-            {movie.image
-              ? <img src={movie.image} alt={movie.title} loading="lazy" />
-              : <span className="poster-placeholder">{GENRE_ICONS[movie.genre] ?? '🎬'}</span>
-            }
-          </div>
+      {processedMovies.map((movie) => {
+        const color = GENRE_COLORS[movie.genre] ?? '#6366f1'
+        return (
+          <li key={movie.id} className={`movie-card ${movie.watched ? 'watched' : ''}`}>
 
-          {/* Info */}
-          <div className="movie-card-body">
-            <div className="movie-card-top">
-              <div className="movie-title-row">
-                <span
-                  className="movie-title"
-                  onClick={() => handleToggle(movie.id)}
-                  title="Click para marcar visto / pendiente"
-                >
-                  {movie.title}
+            {/* Poster */}
+            <div className="wl-poster">
+              {movie.image
+                ? <img src={movie.image} alt={movie.title} loading="lazy" />
+                : (
+                  <div className="wl-poster-placeholder" style={{ background: `${color}33` }}>
+                    <span>{GENRE_ICONS[movie.genre] ?? '🎬'}</span>
+                  </div>
+                )
+              }
+            </div>
+
+            {/* Barra de color por género */}
+            <div className="wl-genre-bar" style={{ background: color }} />
+
+            {/* Info */}
+            <div className="wl-info">
+              <div className="wl-top">
+                <div className="wl-title-row">
+                  <span className="wl-title" onClick={() => handleToggle(movie.id)} title="Marcar visto / pendiente">
+                    {movie.title}
+                  </span>
+                  {movie.year && <span className="wl-year">{movie.year}</span>}
+                </div>
+                <span className={`wl-status ${movie.watched ? 'status-w' : 'status-p'}`}>
+                  {movie.watched ? '✅ Visto' : '⏳ Pendiente'}
                 </span>
-                {movie.year && <span className="movie-year">{movie.year}</span>}
               </div>
-              <span className={`status-badge ${movie.watched ? 'status-watched' : 'status-pending'}`}>
-                {movie.watched ? '✅ Visto' : '⏳ Pendiente'}
-              </span>
+              <div className="wl-bottom">
+                <span className="wl-genre-tag" style={{ color, borderColor: `${color}55`, background: `${color}15` }}>
+                  {GENRE_ICONS[movie.genre]} {movie.genre}
+                </span>
+                <span className="wl-stars">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i} className={i < movie.rating ? 'sf' : 'se'}>★</span>
+                  ))}
+                </span>
+                <button onClick={() => handleRemove(movie.id)} className="wl-btn-remove" aria-label={`Eliminar ${movie.title}`}>
+                  🗑
+                </button>
+              </div>
             </div>
 
-            <div className="movie-card-bottom">
-              <span className="genre-tag">{GENRE_ICONS[movie.genre]} {movie.genre}</span>
-              <span className="movie-stars">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <span key={i} className={i < movie.rating ? 'star-filled' : 'star-empty'}>★</span>
-                ))}
-              </span>
-              <button onClick={() => handleRemove(movie.id)} className="btn-remove" aria-label={`Eliminar ${movie.title}`}>
-                🗑
-              </button>
-            </div>
-          </div>
-        </li>
-      ))}
+          </li>
+        )
+      })}
     </ul>
   )
 }

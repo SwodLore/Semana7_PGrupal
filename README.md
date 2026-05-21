@@ -378,25 +378,31 @@ const { results, loading, error } = useMovieSearch(apiQuery)
 5. Ejecutar guión de interacción:
    - **(a)** Escribir "breaking" en el buscador (espera resultados TVMaze).
    - **(b)** Click en "Breaking Bad" → se agrega a la watchlist.
-   - **(c)** Agregar 2 películas manuales con género/rating distintos.
-   - **(d)** Cambiar filtro a `Pendientes`, luego a `Vistas`.
-   - **(e)** Toggle theme 🌙 ↔ ☀️.
-   - **(f)** Eliminar 1 película.
+   - **(c)** Buscar "dune" y agregar 2 títulos más.
+   - **(d)** Limpiar el buscador → vuelve a la watchlist.
+   - **(e)** Cambiar filtro a `Pendientes`, luego a `Vistas`.
+   - **(f)** Toggle theme 🌙 ↔ ☀️.
+   - **(g)** Eliminar 1 película.
 6. ⏹ Stop. Revisar pestañas **Flamegraph** y **Ranked**.
 
-### Tabla de métricas (referencia esperada con `~5 items`)
+### Tabla de métricas — completar tras grabar la sesión
 
-| Interacción | Commits | Componentes que re-renderizan | Duración (ms aprox) | Observación |
-|---|---:|---|---:|---|
-| Keystroke en buscador (con debounce) | 1 | `Dashboard` (por `apiQuery`) | < 2 ms | `MovieList` **no** se re-renderiza |
-| Llegada de resultados TVMaze | 1 | `Dashboard` (por `results`) | < 3 ms | Solo el dropdown renderiza items |
-| Agregar película (`dispatch ADD`) | 1 | `Dashboard` + `MovieList` | 3–6 ms | `useMemo` recalcula `processedMovies` (justificado) |
-| Toggle theme | 1 | `Dashboard`, `Header` (consume `ThemeContext`) | < 3 ms | `MovieList` **no** se re-renderiza (no consume context) |
-| Cambiar filtro / orden | 1 | `Dashboard` + `MovieList` | 2–4 ms | `useMemo` recalcula con nuevo orden |
-| Toggle `watched` de 1 item | 1 | `Dashboard` + `MovieList` | 2–4 ms | Sin `React.memo` en `<li>` todavía: oportunidad de mejora |
-| Click outside (cerrar dropdown) | 1 | `Dashboard` (por `dismissed`) | < 1 ms | Sin efectos colaterales |
+> ⚠️ **Métricas pendientes**: las cifras de **Commits** y **Duración** deben completarse con los valores que muestre tu propio Profiler tras ejecutar el guión arriba. La columna "Qué validar" indica qué buscar en cada interacción (criterio de aceptación, no medición).
 
-> Las cifras varían según hardware. Lo importante es la **relación** entre interacción y componentes que se renderizan: si `MovieList` se re-renderiza al togglear tema, hay un bug; si `processedMovies` se recalcula al teclear (antes del debounce), hay un bug.
+| # | Interacción | Commits medidos | Duración medida | Qué validar |
+|--:|---|--:|--:|---|
+| 1 | Keystroke en el buscador | _____ | _____ ms | `MovieList` **no** se re-renderiza (debounce activo) |
+| 2 | Llegada de resultados TVMaze | _____ | _____ ms | Solo `Dashboard` + `SearchResults` renderizan |
+| 3 | Agregar película (`dispatch ADD`) | _____ | _____ ms | `useMemo` recalcula `processedMovies` (justificado) |
+| 4 | Toggle theme | _____ | _____ ms | `MovieList` **no** se re-renderiza (no consume `ThemeContext`) |
+| 5 | Cambiar filtro / orden | _____ | _____ ms | `useMemo` recalcula con nuevas deps |
+| 6 | Toggle `watched` de 1 item | _____ | _____ ms | Oportunidad: extraer `MovieCard` + `React.memo` |
+| 7 | Eliminar 1 item | _____ | _____ ms | Reducer responde con array filtrado |
+
+**Cómo extraer cada número:**
+- **Commits medidos**: contador arriba a la izquierda del Profiler (`1 / N`). Anotá el N total tras la interacción aislada.
+- **Duración medida**: en la vista **Ranked**, el bloque más alto del componente raíz del commit (en milisegundos).
+- Para aislar cada interacción, ⏺ Record → hacer **solo esa acción** → ⏹ Stop → anotar → repetir.
 
 ### Capturas (insertar tras grabar la sesión)
 
