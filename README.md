@@ -4,11 +4,10 @@
 **Tema:** React Hooks: useState, useEffect, useContext, useRef, useReducer, useCallback, useMemo y Hooks Personalizados
 
 **INTEGRANTES:**
-- Persona 1 — ___________________
-- Persona 2 — ___________________
-- Persona 3 — ___________________
-- Persona 4 — ___________________
-
+-Araujo Champi Jose Eduardo 
+-Melgarejo Guzman Renzo Gustavo 
+-Poves Martinez Alessando Piero
+-Sulluchuco Vilcapoma Anyelo
 ---
 
 ## Proyecto: Gestor de Tareas con Prioridades
