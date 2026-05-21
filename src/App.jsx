@@ -37,27 +37,23 @@ const Dashboard = () => {
   const [search,   setSearch]     = useState('')  // búsqueda en watchlist
   const [genre,    setGenre]      = useState('Drama')
   const [rating,   setRating]     = useState(3)
-  const [showDrop, setShowDrop]   = useState(false)
+  const [dismissedDrop, setDismissedDrop] = useState(false)
 
   const inputRef    = useRef(null)
   const dropdownRef = useRef(null)
 
   // Hook que llama a TVMaze con debounce + cleanup de AbortController
   const { results, loading } = useMovieSearch(apiQuery)
+  const showDrop = apiQuery.trim() !== '' && results.length > 0 && !dismissedDrop
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handler = (e) => {
-      if (!dropdownRef.current?.contains(e.target)) setShowDrop(false)
+      if (!dropdownRef.current?.contains(e.target)) setDismissedDrop(true)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
-
-  // Mostrar dropdown cuando haya resultados
-  useEffect(() => {
-    setShowDrop(results.length > 0)
-  }, [results])
 
   // ── Seleccionar resultado de TVMaze ──────────────────────
   const handleSelect = useCallback((result) => {
@@ -70,7 +66,7 @@ const Dashboard = () => {
       year:    result.year,
     })
     setApiQuery('')
-    setShowDrop(false)
+    setDismissedDrop(true)
     inputRef.current?.focus()
   }, [])
 
@@ -79,7 +75,7 @@ const Dashboard = () => {
     if (!apiQuery.trim()) return
     dispatch({ type: ACTION_TYPES.ADD, payload: apiQuery.trim(), genre, rating })
     setApiQuery('')
-    setShowDrop(false)
+    setDismissedDrop(true)
   }, [apiQuery, genre, rating])
 
   // ── Handlers para la lista ───────────────────────────────
@@ -136,7 +132,11 @@ const Dashboard = () => {
             <input
               ref={inputRef}
               value={apiQuery}
-              onChange={(e) => setApiQuery(e.target.value)}
+              onChange={(e) => {
+                const nextQuery = e.target.value
+                setApiQuery(nextQuery)
+                setDismissedDrop(nextQuery.trim() === '')
+              }}
               onKeyDown={(e) => e.key === 'Enter' && !showDrop && handleAddManual()}
               placeholder="Buscar película o serie para agregar..."
               className="search-input"
@@ -145,7 +145,7 @@ const Dashboard = () => {
             />
             {loading && <span className="search-spinner">⏳</span>}
             {apiQuery && !loading && (
-              <button className="btn-clear-search" onClick={() => { setApiQuery(''); setShowDrop(false) }}>✕</button>
+              <button className="btn-clear-search" onClick={() => { setApiQuery(''); setDismissedDrop(true) }}>✕</button>
             )}
           </div>
 

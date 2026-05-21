@@ -13,8 +13,16 @@ const TaskList = ({ tasks, filter, sort, onRemove, onToggle }) => {
   // Filtrar: filter==='done' → solo done, filter==='pending' → solo !done, 'all' → todos
   // Ordenar: sort==='asc' → A→Z por title, 'desc' → Z→A
   const processedTasks = useMemo(() => {
-    // TODO: implementar lógica de filtro y ordenamiento
-    return tasks
+    const filteredTasks = tasks.filter((task) => {
+      if (filter === 'done') return task.done
+      if (filter === 'pending') return !task.done
+      return true
+    })
+
+    return [...filteredTasks].sort((taskA, taskB) => {
+      const comparison = taskA.title.localeCompare(taskB.title)
+      return sort === 'desc' ? -comparison : comparison
+    })
   }, [tasks, filter, sort])
 
   // TODO: useCallback para estabilizar handleRemove pasado a hijos
@@ -31,7 +39,7 @@ const TaskList = ({ tasks, filter, sort, onRemove, onToggle }) => {
   // TODO: useEffect que haga focus al input cada vez que se agrega una tarea
   // Dependencia: tasks.length
   useEffect(() => {
-    // inputRef.current?.focus()
+    inputRef.current?.focus()
   }, [tasks.length])
 
   return (

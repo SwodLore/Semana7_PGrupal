@@ -24,7 +24,24 @@ const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) 
   //  3. search: buscar en m.title.toLowerCase() si search no está vacío
   //  4. sort:   'rating' → b.rating-a.rating | 'title-asc' → localeCompare | 'title-desc' → invertido
   const processedMovies = useMemo(() => {
-    return movies
+    const normalizedSearch = search.trim().toLowerCase()
+
+    const filteredMovies = movies.filter((movie) => {
+      if (filter === 'watched' && !movie.watched) return false
+      if (filter === 'pending' && movie.watched) return false
+      if (genre !== 'all' && movie.genre !== genre) return false
+      if (normalizedSearch && !movie.title.toLowerCase().includes(normalizedSearch)) return false
+      return true
+    })
+
+    return [...filteredMovies].sort((movieA, movieB) => {
+      if (sort === 'rating') {
+        return movieB.rating - movieA.rating
+      }
+
+      const titleComparison = movieA.title.localeCompare(movieB.title)
+      return sort === 'title-desc' ? -titleComparison : titleComparison
+    })
   }, [movies, filter, genre, sort, search])
 
   const handleRemove = useCallback((id) => onRemove(id), [onRemove])
@@ -32,7 +49,7 @@ const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) 
 
   // TODO (Persona 3): useEffect — scroll al top cuando se agrega una película
   useEffect(() => {
-    // listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [movies.length])
 
   if (processedMovies.length === 0) {
