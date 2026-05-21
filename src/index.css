@@ -1,0 +1,108 @@
+/* Variables de tema — Persona 4 puede ampliar */
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --card: #f5f5f5;
+  --border: #ddd;
+  --accent: #646cff;
+}
+
+body.dark {
+  --bg: #1a1a2e;
+  --text: #e0e0e0;
+  --card: #16213e;
+  --border: #444;
+  --accent: #818cf8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dashboard {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.add-task {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.input-task {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--card);
+  color: var(--text);
+}
+
+button:hover { background: var(--accent); color: #fff; }
+
+.stats {
+  font-size: 0.85rem;
+  color: var(--border);
+  margin-bottom: 1rem;
+}
+
+.task-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.task-item.done .task-title { text-decoration: line-through; opacity: 0.5; }
+
+.task-title { flex: 1; cursor: pointer; }
+
+.priority {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.priority-alta  { background: #fee2e2; color: #dc2626; }
+.priority-media { background: #fef9c3; color: #ca8a04; }
+.priority-baja  { background: #dcfce7; color: #16a34a; }
+
+body.dark .priority-alta  { background: #450a0a; color: #fca5a5; }
+body.dark .priority-media { background: #422006; color: #fde68a; }
+body.dark .priority-baja  { background: #052e16; color: #86efac; }
