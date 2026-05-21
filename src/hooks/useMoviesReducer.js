@@ -6,16 +6,16 @@
 export const ACTION_TYPES = {
   ADD:          'ADD',
   REMOVE:       'REMOVE',
-  TOGGLE:       'TOGGLE',       // watched ↔ pending
-  FILTER:       'FILTER',       // all | watched | pending
-  FILTER_GENRE: 'FILTER_GENRE', // all | Acción | Drama | ...
-  SORT:         'SORT',         // rating | title-asc | title-desc
+  TOGGLE:       'TOGGLE',
+  FILTER:       'FILTER',
+  FILTER_GENRE: 'FILTER_GENRE',
+  SORT:         'SORT',
 }
 
 export const GENRES = ['Acción', 'Comedia', 'Drama', 'Terror', 'Sci-Fi', 'Animación', 'Documental', 'Romance']
 
-const VALID_FILTERS  = ['all', 'watched', 'pending']
-const VALID_SORTS    = ['rating', 'title-asc', 'title-desc']
+const VALID_FILTERS = ['all', 'watched', 'pending']
+const VALID_SORTS   = ['rating', 'title-asc', 'title-desc']
 
 export const initialState = {
   items:  [],
@@ -40,6 +40,8 @@ function moviesReducer(state, action) {
             title,
             genre:   action.genre   ?? 'Drama',
             rating:  action.rating  ?? 3,
+            image:   action.image   ?? null,   // poster de TVMaze
+            year:    action.year    ?? '',      // año de estreno
             watched: false,
           },
         ],

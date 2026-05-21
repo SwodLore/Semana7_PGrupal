@@ -1,78 +1,90 @@
 // ============================================================
 // PERSONA 3 — Optimizador de Rendimiento
-// TODO: Implementar useMemo, useCallback, useRef, useEffect
+// TODO: completar useMemo (filtro + orden + búsqueda)
 // ============================================================
 import { useMemo, useCallback, useRef, useEffect } from 'react'
 
-const MovieList = ({ movies, filter, genre, sort, onRemove, onToggle }) => {
+const GENRE_COLORS = {
+  'Acción':'#ef4444','Comedia':'#f59e0b','Drama':'#6366f1',
+  'Terror':'#7c3aed','Sci-Fi':'#06b6d4','Animación':'#ec4899',
+  'Documental':'#10b981','Romance':'#f97316',
+}
+const GENRE_ICONS = {
+  'Acción':'💥','Comedia':'😂','Drama':'🎭','Terror':'👻',
+  'Sci-Fi':'🚀','Animación':'🎨','Documental':'🎙️','Romance':'💕',
+}
 
-  // TODO: useRef para referenciar el input del formulario en App y hacer auto-focus
-  const topRef = useRef(null)
+const MovieList = ({ movies, filter, genre, sort, search, onRemove, onToggle }) => {
+  const listRef = useRef(null)
 
-  // TODO: useMemo — calcular processedMovies sin recalcular en cada render
-  // Solo recalcular cuando cambien: movies, filter, genre, sort
-  //
+  // TODO (Persona 3): implementar el filtro y ordenamiento
   // Pasos:
-  //   1. Filtrar por watched: filter==='watched' → solo watched, 'pending' → !watched
-  //   2. Filtrar por género: genre !== 'all' → solo los que coincidan
-  //   3. Ordenar:
-  //        sort === 'rating'     → mayor rating primero (b.rating - a.rating)
-  //        sort === 'title-asc'  → A→Z (a.title.localeCompare(b.title))
-  //        sort === 'title-desc' → Z→A (b.title.localeCompare(a.title))
+  //  1. filter: 'watched' → solo m.watched | 'pending' → !m.watched
+  //  2. genre:  !== 'all' → m.genre === genre
+  //  3. search: buscar en m.title.toLowerCase() si search no está vacío
+  //  4. sort:   'rating' → b.rating-a.rating | 'title-asc' → localeCompare | 'title-desc' → invertido
   const processedMovies = useMemo(() => {
-    // TODO: implementar filtro y ordenamiento
     return movies
-  }, [movies, filter, genre, sort])
+  }, [movies, filter, genre, sort, search])
 
-  // TODO: useCallback para estabilizar handleRemove pasado a cada item
-  // Sin useCallback, la referencia cambia en cada render y re-renderiza toda la lista
-  const handleRemove = useCallback((id) => {
-    onRemove(id)
-  }, [onRemove])
+  const handleRemove = useCallback((id) => onRemove(id), [onRemove])
+  const handleToggle = useCallback((id) => onToggle(id), [onToggle])
 
-  // TODO: useCallback para handleToggle
-  const handleToggle = useCallback((id) => {
-    onToggle(id)
-  }, [onToggle])
-
-  // TODO: useEffect — hacer scroll al top cuando se agrega una nueva película
-  // Dependencia: movies.length
+  // TODO (Persona 3): useEffect — scroll al top cuando se agrega una película
   useEffect(() => {
-    // topRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [movies.length])
 
+  if (processedMovies.length === 0) {
+    return <div className="no-results"><p>🔍 Sin resultados para los filtros aplicados</p></div>
+  }
+
   return (
-    <ul className="movie-list" ref={topRef}>
+    <ul className="movie-list" ref={listRef}>
       {processedMovies.map((movie) => (
-        <li key={movie.id} className={`movie-item ${movie.watched ? 'watched' : ''}`}>
-
-          <div className="movie-info">
-            <span
-              className="movie-title"
-              onClick={() => handleToggle(movie.id)}
-              title="Click para marcar como visto/pendiente"
-            >
-              {movie.title}
-            </span>
-            <span className="movie-genre">{movie.genre}</span>
+        <li
+          key={movie.id}
+          className={`movie-card ${movie.watched ? 'watched' : ''}`}
+          style={{ '--genre-color': GENRE_COLORS[movie.genre] ?? '#6366f1' }}
+        >
+          {/* Poster */}
+          <div className="movie-poster">
+            {movie.image
+              ? <img src={movie.image} alt={movie.title} loading="lazy" />
+              : <span className="poster-placeholder">{GENRE_ICONS[movie.genre] ?? '🎬'}</span>
+            }
           </div>
 
-          <div className="movie-meta">
-            <span className="movie-rating">
-              {'★'.repeat(movie.rating)}{'☆'.repeat(5 - movie.rating)}
-            </span>
-            <span className={`movie-status ${movie.watched ? 'status-watched' : 'status-pending'}`}>
-              {movie.watched ? '✅ Visto' : '⏳ Pendiente'}
-            </span>
-            <button
-              onClick={() => handleRemove(movie.id)}
-              className="btn-remove"
-              aria-label={`Eliminar ${movie.title}`}
-            >
-              🗑
-            </button>
-          </div>
+          {/* Info */}
+          <div className="movie-card-body">
+            <div className="movie-card-top">
+              <div className="movie-title-row">
+                <span
+                  className="movie-title"
+                  onClick={() => handleToggle(movie.id)}
+                  title="Click para marcar visto / pendiente"
+                >
+                  {movie.title}
+                </span>
+                {movie.year && <span className="movie-year">{movie.year}</span>}
+              </div>
+              <span className={`status-badge ${movie.watched ? 'status-watched' : 'status-pending'}`}>
+                {movie.watched ? '✅ Visto' : '⏳ Pendiente'}
+              </span>
+            </div>
 
+            <div className="movie-card-bottom">
+              <span className="genre-tag">{GENRE_ICONS[movie.genre]} {movie.genre}</span>
+              <span className="movie-stars">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} className={i < movie.rating ? 'star-filled' : 'star-empty'}>★</span>
+                ))}
+              </span>
+              <button onClick={() => handleRemove(movie.id)} className="btn-remove" aria-label={`Eliminar ${movie.title}`}>
+                🗑
+              </button>
+            </div>
+          </div>
         </li>
       ))}
     </ul>
