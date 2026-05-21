@@ -1,8 +1,8 @@
 // ============================================================
 // PERSONA 1 — Arquitecto de Estado
-// Hooks: useReducer, useState, useContext
+// Hooks: useReducer, useState, useContext, useCallback
 // ============================================================
-import { useReducer, useContext, useState } from 'react'
+import { useReducer, useContext, useState, useCallback } from 'react'
 import tasksReducer, { ACTION_TYPES, initialState } from './hooks/useTasksReducer'
 import { ThemeProvider, ThemeContext } from './contexts/ThemeContext'
 import TaskList from './components/TaskList'
@@ -11,24 +11,41 @@ const Dashboard = () => {
   const [state, dispatch] = useReducer(tasksReducer, initialState)
   const { theme, toggleTheme } = useContext(ThemeContext)
 
-  // useState para UI local — no forma parte del estado global de tareas
+  // useState para UI local — inputValue y priority no son estado global de tareas
   const [inputValue, setInputValue] = useState('')
   const [priority, setPriority] = useState('media')
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (!inputValue.trim()) return
     dispatch({ type: ACTION_TYPES.ADD, payload: inputValue.trim(), priority })
     setInputValue('')
-  }
+  }, [inputValue, priority])
 
-  const handleRemove = (id) => dispatch({ type: ACTION_TYPES.REMOVE, payload: id })
-  const handleToggle = (id) => dispatch({ type: ACTION_TYPES.TOGGLE, payload: id })
-  const handleFilter = (value) => dispatch({ type: ACTION_TYPES.FILTER, payload: value })
-  const handleSort = () =>
-    dispatch({ type: ACTION_TYPES.SORT, payload: state.sort === 'asc' ? 'desc' : 'asc' })
+  // useCallback aquí es crítico: estas funciones se pasan como props a TaskList.
+  // Sin useCallback, cambian referencia en cada render y anulan el useCallback de Persona 3.
+  const handleRemove = useCallback(
+    (id) => dispatch({ type: ACTION_TYPES.REMOVE, payload: id }),
+    []
+  )
 
-  const donasCount = state.items.filter((t) => t.done).length
-  const pendingCount = state.items.length - donasCount
+  const handleToggle = useCallback(
+    (id) => dispatch({ type: ACTION_TYPES.TOGGLE, payload: id }),
+    []
+  )
+
+  const handleFilter = useCallback(
+    (value) => dispatch({ type: ACTION_TYPES.FILTER, payload: value }),
+    []
+  )
+
+  const handleSort = useCallback(
+    () => dispatch({ type: ACTION_TYPES.SORT, payload: state.sort === 'asc' ? 'desc' : 'asc' }),
+    [state.sort]
+  )
+
+  // Fix: era "donasCount" (typo)
+  const doneCount = state.items.filter((t) => t.done).length
+  const pendingCount = state.items.length - doneCount
 
   return (
     <div className={`dashboard ${theme}`}>
@@ -47,11 +64,13 @@ const Dashboard = () => {
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Nueva tarea..."
           className="input-task"
+          aria-label="Título de la tarea"
         />
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
           className="select-priority"
+          aria-label="Prioridad"
         >
           <option value="alta">Alta</option>
           <option value="media">Media</option>
@@ -78,12 +97,16 @@ const Dashboard = () => {
           onClick={() => handleFilter('done')}
           className={state.filter === 'done' ? 'active' : ''}
         >
-          Completadas ({donasCount})
+          Completadas ({doneCount})
         </button>
-        <button onClick={handleSort}>
-          Ordenar {state.sort === 'asc' ? 'Z→A' : 'A→Z'}
+        <button onClick={handleSort} className="btn-sort">
+          {state.sort === 'asc' ? '↑ A→Z' : '↓ Z→A'}
         </button>
       </div>
+
+      {state.items.length === 0 && (
+        <p className="empty-msg">No hay tareas. ¡Agrega una!</p>
+      )}
 
       <TaskList
         tasks={state.items}

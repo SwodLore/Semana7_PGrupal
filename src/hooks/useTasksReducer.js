@@ -11,6 +11,10 @@ export const ACTION_TYPES = {
   SORT: 'SORT',
 }
 
+const VALID_PRIORITIES = ['alta', 'media', 'baja']
+const VALID_FILTERS = ['all', 'pending', 'done']
+const VALID_SORTS = ['asc', 'desc']
+
 export const initialState = {
   items: [],
   filter: 'all',  // 'all' | 'pending' | 'done'
@@ -19,19 +23,29 @@ export const initialState = {
 
 function tasksReducer(state, action) {
   switch (action.type) {
-    case ACTION_TYPES.ADD:
+    case ACTION_TYPES.ADD: {
+      const title = action.payload?.trim()
+      if (!title) return state
+
+      const priority = VALID_PRIORITIES.includes(action.priority)
+        ? action.priority
+        : 'media'
+
       return {
         ...state,
         items: [
           ...state.items,
           {
-            id: Date.now(),
-            title: action.payload,
-            priority: action.priority ?? 'media',
+            // crypto.randomUUID evita colisiones que Date.now() puede tener
+            // si dos ADD llegan en el mismo milisegundo
+            id: crypto.randomUUID(),
+            title,
+            priority,
             done: false,
           },
         ],
       }
+    }
 
     case ACTION_TYPES.REMOVE:
       return {
@@ -48,9 +62,11 @@ function tasksReducer(state, action) {
       }
 
     case ACTION_TYPES.FILTER:
+      if (!VALID_FILTERS.includes(action.payload)) return state
       return { ...state, filter: action.payload }
 
     case ACTION_TYPES.SORT:
+      if (!VALID_SORTS.includes(action.payload)) return state
       return { ...state, sort: action.payload }
 
     default:

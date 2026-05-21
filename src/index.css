@@ -70,6 +70,30 @@ button {
 
 button:hover { background: var(--accent); color: #fff; }
 
+/* Botón de filtro activo */
+button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* Select de prioridad hereda variables del tema */
+.select-priority {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 2rem;
+  color: var(--border);
+  font-style: italic;
+}
+
 .stats {
   font-size: 0.85rem;
   color: var(--border);
