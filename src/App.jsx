@@ -1,61 +1,36 @@
 // ============================================================
 // PERSONA 1 — Arquitecto de Estado
-// Hooks: useReducer, useState, useContext, useCallback, useRef
+// Hooks: useReducer, useState, useContext, useCallback, useMemo
 // ============================================================
-import { useReducer, useContext, useState, useCallback, useRef, useEffect } from 'react'
+import { useReducer, useContext, useState, useCallback, useMemo } from 'react'
 import moviesReducer, { ACTION_TYPES, GENRES, initialState } from './hooks/useMoviesReducer'
 import { ThemeProvider, ThemeContext } from './contexts/ThemeContext'
 import { useMovieSearch } from './hooks/useMovieSearch'
-import MovieList from './components/MovieList'
+import MovieList    from './components/MovieList'
+import SearchResults from './components/SearchResults'
 
 const GENRE_ICONS = {
   'Acción':'💥','Comedia':'😂','Drama':'🎭','Terror':'👻',
   'Sci-Fi':'🚀','Animación':'🎨','Documental':'🎙️','Romance':'💕',
 }
 
-// ── Componente estrellas ─────────────────────────────────────
-const StarRating = ({ value, onChange }) => (
-  <div className="star-rating" role="group" aria-label="Calificación">
-    {[1,2,3,4,5].map((s) => (
-      <button
-        key={s} type="button"
-        className={`star ${s <= value ? 'filled' : ''}`}
-        onClick={() => onChange(s)}
-        aria-label={`${s} estrella${s > 1 ? 's' : ''}`}
-      >★</button>
-    ))}
-  </div>
-)
-
 // ── Dashboard ────────────────────────────────────────────────
 const Dashboard = () => {
   const [state, dispatch] = useReducer(moviesReducer, initialState)
   const { theme, toggleTheme } = useContext(ThemeContext)
 
-  // Estado local UI — formulario y buscador watchlist
-  const [apiQuery, setApiQuery]   = useState('')  // búsqueda en TVMaze
-  const [search,   setSearch]     = useState('')  // búsqueda en watchlist
-  const [genre,    setGenre]      = useState('Drama')
-  const [rating,   setRating]     = useState(3)
-  const [dismissedDrop, setDismissedDrop] = useState(false)
+  const [apiQuery, setApiQuery] = useState('')
+  const [search,   setSearch]   = useState('')
 
-  const inputRef    = useRef(null)
-  const dropdownRef = useRef(null)
-
-  // Hook que llama a TVMaze con debounce + cleanup de AbortController
   const { results, loading } = useMovieSearch(apiQuery)
-  const showDrop = apiQuery.trim() !== '' && results.length > 0 && !dismissedDrop
 
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    const handler = (e) => {
-      if (!dropdownRef.current?.contains(e.target)) setDismissedDrop(true)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  // Set de tvmazeIds ya en la watchlist para mostrar "En tu lista"
+  const watchlistIds = useMemo(
+    () => new Set(state.items.map((m) => m.tvId).filter(Boolean)),
+    [state.items]
+  )
 
-  // ── Seleccionar resultado de TVMaze ──────────────────────
+  // ── Agregar desde TVMaze ────────────────────────────────
   const handleSelect = useCallback((result) => {
     dispatch({
       type:    ACTION_TYPES.ADD,
@@ -64,21 +39,12 @@ const Dashboard = () => {
       rating:  result.rating,
       image:   result.image,
       year:    result.year,
+      tvId:    result.id,       // id de TVMaze para detectar duplicados
     })
     setApiQuery('')
-    setDismissedDrop(true)
-    inputRef.current?.focus()
   }, [])
 
-  // ── Agregar manual (sin API) ─────────────────────────────
-  const handleAddManual = useCallback(() => {
-    if (!apiQuery.trim()) return
-    dispatch({ type: ACTION_TYPES.ADD, payload: apiQuery.trim(), genre, rating })
-    setApiQuery('')
-    setDismissedDrop(true)
-  }, [apiQuery, genre, rating])
-
-  // ── Handlers para la lista ───────────────────────────────
+  // ── Handlers watchlist ──────────────────────────────────
   const handleRemove = useCallback((id) => dispatch({ type: ACTION_TYPES.REMOVE, payload: id }), [])
   const handleToggle = useCallback((id) => dispatch({ type: ACTION_TYPES.TOGGLE, payload: id }), [])
   const handleFilter = useCallback((v) => dispatch({ type: ACTION_TYPES.FILTER, payload: v }), [])
@@ -87,6 +53,7 @@ const Dashboard = () => {
 
   const watchedCount = state.items.filter((m) => m.watched).length
   const pendingCount = state.items.length - watchedCount
+  const isSearching  = apiQuery.trim().length > 0
 
   return (
     <div className={`app ${theme}`}>
@@ -107,145 +74,120 @@ const Dashboard = () => {
 
       <main className="main">
 
-        {/* ── Stats ── */}
-        <div className="stats-row">
-          {[
-            { num: state.items.length, label: '🎞️ Total',       cls: '' },
-            { num: watchedCount,       label: '✅ Vistas',       cls: 'stat-watched' },
-            { num: pendingCount,       label: '⏳ Pendientes',   cls: 'stat-pending' },
-            ...(state.items.length > 0 ? [{
-              num: `${Math.round((watchedCount / state.items.length) * 100)}%`,
-              label: '🏁 Completado', cls: 'stat-progress',
-            }] : []),
-          ].map(({ num, label, cls }) => (
-            <div key={label} className={`stat-card ${cls}`}>
-              <span className="stat-number">{num}</span>
-              <span className="stat-label">{label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Buscador TVMaze + dropdown ── */}
-        <div className="search-api-wrap" ref={dropdownRef}>
-          <div className="search-api-bar">
-            <span className="search-icon">🔍</span>
+        {/* ── Buscador principal TVMaze ── */}
+        <div className="hero-search">
+          <p className="hero-label">Busca una película o serie para agregarla</p>
+          <div className="search-wrap">
+            <span className="search-icon-abs">🔍</span>
             <input
-              ref={inputRef}
               value={apiQuery}
-              onChange={(e) => {
-                const nextQuery = e.target.value
-                setApiQuery(nextQuery)
-                setDismissedDrop(nextQuery.trim() === '')
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && !showDrop && handleAddManual()}
-              placeholder="Buscar película o serie para agregar..."
-              className="search-input"
+              onChange={(e) => setApiQuery(e.target.value)}
+              placeholder="Ej: Dune, Breaking Bad, Avatar..."
+              className="hero-input"
               aria-label="Buscar en TVMaze"
               autoComplete="off"
             />
-            {loading && <span className="search-spinner">⏳</span>}
-            {apiQuery && !loading && (
-              <button className="btn-clear-search" onClick={() => { setApiQuery(''); setDismissedDrop(true) }}>✕</button>
+            {apiQuery && (
+              <button className="btn-clear" onClick={() => setApiQuery('')}>✕</button>
             )}
           </div>
-
-          {/* Dropdown resultados TVMaze */}
-          {showDrop && (
-            <ul className="api-dropdown">
-              {results.map((r) => (
-                <li key={r.id} className="api-result" onClick={() => handleSelect(r)}>
-                  <div className="api-result-img">
-                    {r.image
-                      ? <img src={r.image} alt={r.title} />
-                      : <span className="api-result-noimg">🎬</span>
-                    }
-                  </div>
-                  <div className="api-result-info">
-                    <span className="api-result-title">{r.title}</span>
-                    <span className="api-result-meta">
-                      {GENRE_ICONS[r.genre]} {r.genre}
-                      {r.year && <> · {r.year}</>}
-                      · {'⭐'.repeat(r.rating)}
-                    </span>
-                  </div>
-                  <span className="api-result-add">+ Agregar</span>
-                </li>
-              ))}
-              <li className="api-dropdown-footer">
-                Resultados de <strong>TVMaze API</strong>
-              </li>
-            </ul>
-          )}
         </div>
 
-        {/* ── Género y rating para agregar manual ── */}
-        <div className="manual-opts">
-          <span className="manual-label">Agregar manual:</span>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} className="select-field" aria-label="Género">
-            {GENRES.map((g) => <option key={g} value={g}>{GENRE_ICONS[g]} {g}</option>)}
-          </select>
-          <StarRating value={rating} onChange={setRating} />
-          <button onClick={handleAddManual} className="btn-add" disabled={!apiQuery.trim()}>+ Agregar</button>
-        </div>
-
-        {/* ── Buscador dentro de watchlist ── */}
-        <div className="search-bar">
-          <span className="search-icon">📋</span>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filtrar tu watchlist..."
-            className="search-input"
-            aria-label="Filtrar watchlist"
+        {/* ── Resultados TVMaze (cuando se busca) ── */}
+        {isSearching && (
+          <SearchResults
+            results={results}
+            loading={loading}
+            query={apiQuery}
+            onAdd={handleSelect}
+            watchlistIds={watchlistIds}
           />
-          {search && (
-            <button className="btn-clear-search" onClick={() => setSearch('')}>✕</button>
-          )}
-        </div>
+        )}
 
-        {/* ── Filtros y orden ── */}
-        <div className="toolbar">
-          <div className="filter-tabs">
-            {[
-              { v: 'all',     l: 'Todas',      n: state.items.length },
-              { v: 'pending', l: 'Pendientes', n: pendingCount },
-              { v: 'watched', l: 'Vistas',     n: watchedCount },
-            ].map(({ v, l, n }) => (
-              <button key={v} onClick={() => handleFilter(v)} className={`tab ${state.filter === v ? 'active' : ''}`}>
-                {l} <span className="tab-count">{n}</span>
-              </button>
-            ))}
-          </div>
-          <div className="sort-controls">
-            <select value={state.genre} onChange={(e) => handleFilterGenre(e.target.value)} className="select-field" aria-label="Filtrar género">
-              <option value="all">🎬 Género</option>
-              {GENRES.map((g) => <option key={g} value={g}>{GENRE_ICONS[g]} {g}</option>)}
-            </select>
-            <select value={state.sort} onChange={(e) => handleSort(e.target.value)} className="select-field" aria-label="Ordenar">
-              <option value="rating">⭐ Mayor rating</option>
-              <option value="title-asc">🔤 A → Z</option>
-              <option value="title-desc">🔤 Z → A</option>
-            </select>
-          </div>
-        </div>
+        {/* ── Watchlist ── */}
+        {!isSearching && (
+          <>
+            {/* Stats */}
+            {state.items.length > 0 && (
+              <div className="stats-row">
+                {[
+                  { num: state.items.length,   label: 'Total',       cls: '' },
+                  { num: watchedCount,          label: '✅ Vistas',   cls: 'stat-watched' },
+                  { num: pendingCount,          label: '⏳ Pendiente', cls: 'stat-pending' },
+                  { num: `${Math.round((watchedCount / state.items.length) * 100)}%`, label: 'Completado', cls: 'stat-progress' },
+                ].map(({ num, label, cls }) => (
+                  <div key={label} className={`stat-card ${cls}`}>
+                    <span className="stat-number">{num}</span>
+                    <span className="stat-label">{label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-        {/* ── Lista ── */}
-        {state.items.length === 0 ? (
-          <div className="empty-state">
-            <p className="empty-icon">🍿</p>
-            <p className="empty-title">Tu watchlist está vacía</p>
-            <p className="empty-sub">Busca una película o serie arriba para agregarla</p>
-          </div>
-        ) : (
-          <MovieList
-            movies={state.items}
-            filter={state.filter}
-            genre={state.genre}
-            sort={state.sort}
-            search={search}
-            onRemove={handleRemove}
-            onToggle={handleToggle}
-          />
+            {/* Filtro dentro de watchlist */}
+            {state.items.length > 0 && (
+              <>
+                <div className="search-bar">
+                  <span className="search-icon-abs">📋</span>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar en tu watchlist..."
+                    className="hero-input"
+                    aria-label="Filtrar watchlist"
+                  />
+                  {search && (
+                    <button className="btn-clear" onClick={() => setSearch('')}>✕</button>
+                  )}
+                </div>
+
+                <div className="toolbar">
+                  <div className="filter-tabs">
+                    {[
+                      { v: 'all',     l: 'Todas',      n: state.items.length },
+                      { v: 'pending', l: 'Pendientes', n: pendingCount },
+                      { v: 'watched', l: 'Vistas',     n: watchedCount },
+                    ].map(({ v, l, n }) => (
+                      <button key={v} onClick={() => handleFilter(v)}
+                        className={`tab ${state.filter === v ? 'active' : ''}`}>
+                        {l} <span className="tab-count">{n}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="sort-controls">
+                    <select value={state.genre} onChange={(e) => handleFilterGenre(e.target.value)} className="select-field">
+                      <option value="all">🎬 Género</option>
+                      {GENRES.map((g) => <option key={g} value={g}>{GENRE_ICONS[g]} {g}</option>)}
+                    </select>
+                    <select value={state.sort} onChange={(e) => handleSort(e.target.value)} className="select-field">
+                      <option value="rating">⭐ Mayor rating</option>
+                      <option value="title-asc">🔤 A → Z</option>
+                      <option value="title-desc">🔤 Z → A</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Lista o empty state */}
+            {state.items.length === 0 ? (
+              <div className="empty-state">
+                <p className="empty-icon">🍿</p>
+                <p className="empty-title">Tu watchlist está vacía</p>
+                <p className="empty-sub">Busca una película o serie arriba para agregarla</p>
+              </div>
+            ) : (
+              <MovieList
+                movies={state.items}
+                filter={state.filter}
+                genre={state.genre}
+                sort={state.sort}
+                search={search}
+                onRemove={handleRemove}
+                onToggle={handleToggle}
+              />
+            )}
+          </>
         )}
 
       </main>

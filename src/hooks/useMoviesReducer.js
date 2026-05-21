@@ -40,8 +40,9 @@ function moviesReducer(state, action) {
             title,
             genre:   action.genre   ?? 'Drama',
             rating:  action.rating  ?? 3,
-            image:   action.image   ?? null,   // poster de TVMaze
-            year:    action.year    ?? '',      // año de estreno
+            image:   action.image   ?? null,
+            year:    action.year    ?? '',
+            tvId:    action.tvId    ?? null,    // id TVMaze para detectar duplicados
             watched: false,
           },
         ],
