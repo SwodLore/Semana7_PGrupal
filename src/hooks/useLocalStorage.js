@@ -5,15 +5,21 @@
 // ============================================================
 import { useState, useEffect } from 'react'
 
+// Uso esperado en el proyecto:
+//   const [watchlist, setWatchlist] = useLocalStorage('cinetracker-watchlist', [])
+//   const [theme, setTheme]         = useLocalStorage('cinetracker-theme', 'light')
+//
 // Recibe (key, defaultValue), retorna [value, setValue] igual que useState
+
 export const useLocalStorage = (key, defaultValue) => {
-  // TODO: Inicializar con useState leyendo localStorage.getItem(key)
-  // Usar JSON.parse con try/catch por si el valor guardado es inválido
+  // TODO: inicializar con useState usando una función lazy (evita leer localStorage en cada render)
+  //   intentar JSON.parse(localStorage.getItem(key))
+  //   si falla o no existe → devolver defaultValue
   const [value, setValue] = useState(defaultValue)
 
-  // TODO: useEffect que escuche cambios de `value` y escriba en localStorage
-  // localStorage.setItem(key, JSON.stringify(value))
-  // Incluir [key, value] en el array de dependencias
+  // TODO: useEffect que persista `value` en localStorage cada vez que cambie
+  //   localStorage.setItem(key, JSON.stringify(value))
+  //   Dependencias: [key, value]
 
   return [value, setValue]
 }

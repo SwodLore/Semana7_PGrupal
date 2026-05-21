@@ -1,35 +1,51 @@
-/* Variables de tema — Persona 4 puede ampliar */
+/* ── Variables de tema ──────────────────────────────────── */
 :root {
-  --bg: #ffffff;
-  --text: #1a1a1a;
-  --card: #f5f5f5;
-  --border: #ddd;
-  --accent: #646cff;
+  --bg:       #f8f9fa;
+  --surface:  #ffffff;
+  --border:   #e2e8f0;
+  --text:     #1a202c;
+  --text-muted: #718096;
+  --accent:   #6366f1;
+  --accent-hover: #4f46e5;
+  --watched:  #10b981;
+  --pending:  #f59e0b;
+  --danger:   #ef4444;
+  --star:     #f59e0b;
 }
 
 body.dark {
-  --bg: #1a1a2e;
-  --text: #e0e0e0;
-  --card: #16213e;
-  --border: #444;
-  --accent: #818cf8;
+  --bg:       #0f0f1a;
+  --surface:  #1a1a2e;
+  --border:   #2d3748;
+  --text:     #e2e8f0;
+  --text-muted: #718096;
+  --accent:   #818cf8;
+  --accent-hover: #a5b4fc;
+  --watched:  #34d399;
+  --pending:  #fbbf24;
+  --danger:   #f87171;
+  --star:     #fbbf24;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: system-ui, sans-serif;
-  background-color: var(--bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
   color: var(--text);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background 0.3s, color 0.3s;
+  min-height: 100vh;
 }
 
+/* ── Layout ─────────────────────────────────────────────── */
 .dashboard {
-  max-width: 700px;
-  margin: 2rem auto;
-  padding: 1.5rem;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
 }
 
+/* ── Header ─────────────────────────────────────────────── */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -37,96 +53,245 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.add-task {
+.header-title {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
-.input-task {
-  flex: 1;
-  padding: 0.5rem;
+.header-icon { font-size: 1.75rem; }
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* ── Stats bar ──────────────────────────────────────────── */
+.stats-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--text);
+  border-radius: 10px;
 }
 
-.controls {
+.stat {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.stat strong { color: var(--text); }
+
+/* ── Formulario agregar ─────────────────────────────────── */
+.add-form {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
   flex-wrap: wrap;
-}
-
-button {
-  padding: 0.4rem 0.9rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-  background: var(--card);
-  color: var(--text);
+  border-radius: 12px;
 }
 
-button:hover { background: var(--accent); color: #fff; }
+.input-title {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
 
-/* Botón de filtro activo */
+.input-title:focus { border-color: var(--accent); }
+
+.select-field {
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ── Star rating ────────────────────────────────────────── */
+.star-rating { display: flex; gap: 2px; }
+
+.star {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--border);
+  padding: 0 1px;
+  transition: color 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.star.filled { color: var(--star); }
+.star:hover  { transform: scale(1.2); color: var(--star); }
+
+/* ── Buttons ────────────────────────────────────────────── */
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.btn-add {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-add:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.btn-theme { font-size: 0.8rem; white-space: nowrap; }
+
+.btn-remove {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  padding: 0.25rem 0.4rem;
+  color: var(--text-muted);
+  border-radius: 6px;
+}
+
+.btn-remove:hover { background: var(--danger); color: #fff; }
+
+/* ── Toolbar (filtros + orden) ──────────────────────────── */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filter-group, .sort-group {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 button.active {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
 }
 
-/* Select de prioridad hereda variables del tema */
-.select-priority {
-  padding: 0.4rem 0.5rem;
+/* ── Movie list ─────────────────────────────────────────── */
+.movie-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.movie-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--text);
+  border-radius: 12px;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+.movie-item.watched {
+  border-left: 3px solid var(--watched);
+  opacity: 0.75;
+}
+
+.movie-item:not(.watched) {
+  border-left: 3px solid var(--pending);
+}
+
+.movie-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.movie-title {
+  font-weight: 600;
+  font-size: 0.975rem;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.empty-msg {
-  text-align: center;
-  padding: 2rem;
-  color: var(--border);
-  font-style: italic;
+.movie-item.watched .movie-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
-.stats {
-  font-size: 0.85rem;
-  color: var(--border);
-  margin-bottom: 1rem;
+.movie-title:hover { color: var(--accent); }
+
+.movie-genre {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
-.task-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
-
-.task-item {
+.movie-meta {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  flex-shrink: 0;
 }
 
-.task-item.done .task-title { text-decoration: line-through; opacity: 0.5; }
+.movie-rating {
+  font-size: 0.85rem;
+  color: var(--star);
+  letter-spacing: -1px;
+}
 
-.task-title { flex: 1; cursor: pointer; }
-
-.priority {
+.movie-status {
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-weight: bold;
+  border-radius: 20px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.priority-alta  { background: #fee2e2; color: #dc2626; }
-.priority-media { background: #fef9c3; color: #ca8a04; }
-.priority-baja  { background: #dcfce7; color: #16a34a; }
+.status-watched { background: #d1fae5; color: #065f46; }
+.status-pending { background: #fef3c7; color: #92400e; }
 
-body.dark .priority-alta  { background: #450a0a; color: #fca5a5; }
-body.dark .priority-media { background: #422006; color: #fde68a; }
-body.dark .priority-baja  { background: #052e16; color: #86efac; }
+body.dark .status-watched { background: #064e3b; color: #6ee7b7; }
+body.dark .status-pending { background: #451a03; color: #fde68a; }
+
+/* ── Empty state ────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.empty-state p   { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.empty-state small { font-size: 0.875rem; }

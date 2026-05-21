@@ -3,26 +3,58 @@
 // Hooks: useReducer, useState, useContext, useCallback
 // ============================================================
 import { useReducer, useContext, useState, useCallback } from 'react'
-import tasksReducer, { ACTION_TYPES, initialState } from './hooks/useTasksReducer'
+import moviesReducer, { ACTION_TYPES, GENRES, initialState } from './hooks/useMoviesReducer'
 import { ThemeProvider, ThemeContext } from './contexts/ThemeContext'
-import TaskList from './components/TaskList'
+import MovieList from './components/MovieList'
 
+const GENRE_ICONS = {
+  'Acción':      '💥',
+  'Comedia':     '😂',
+  'Drama':       '🎭',
+  'Terror':      '👻',
+  'Sci-Fi':      '🚀',
+  'Animación':   '🎨',
+  'Documental':  '🎙️',
+  'Romance':     '💕',
+}
+
+// ── Componente de estrellas ──────────────────────────────────
+const StarRating = ({ value, onChange }) => (
+  <div className="star-rating" role="group" aria-label="Calificación">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <button
+        key={star}
+        type="button"
+        className={`star ${star <= value ? 'filled' : ''}`}
+        onClick={() => onChange(star)}
+        aria-label={`${star} estrella${star > 1 ? 's' : ''}`}
+      >
+        ★
+      </button>
+    ))}
+  </div>
+)
+
+// ── Dashboard principal ──────────────────────────────────────
 const Dashboard = () => {
-  const [state, dispatch] = useReducer(tasksReducer, initialState)
+  const [state, dispatch] = useReducer(moviesReducer, initialState)
   const { theme, toggleTheme } = useContext(ThemeContext)
 
-  // useState para UI local — inputValue y priority no son estado global de tareas
-  const [inputValue, setInputValue] = useState('')
-  const [priority, setPriority] = useState('media')
+  // Estado local de UI — no pertenece al estado global de la watchlist
+  const [title, setTitle]   = useState('')
+  const [genre, setGenre]   = useState('Drama')
+  const [rating, setRating] = useState(3)
 
+  // ── Handlers con useCallback ──────────────────────────────
+  // handleRemove y handleToggle usan useCallback porque se pasan
+  // como props a MovieList — sin esto, Persona 3's useCallback es inútil.
   const handleAdd = useCallback(() => {
-    if (!inputValue.trim()) return
-    dispatch({ type: ACTION_TYPES.ADD, payload: inputValue.trim(), priority })
-    setInputValue('')
-  }, [inputValue, priority])
+    if (!title.trim()) return
+    dispatch({ type: ACTION_TYPES.ADD, payload: title.trim(), genre, rating })
+    setTitle('')
+    setRating(3)
+  }, [title, genre, rating])
 
-  // useCallback aquí es crítico: estas funciones se pasan como props a TaskList.
-  // Sin useCallback, cambian referencia en cada render y anulan el useCallback de Persona 3.
   const handleRemove = useCallback(
     (id) => dispatch({ type: ACTION_TYPES.REMOVE, payload: id }),
     []
@@ -38,83 +70,126 @@ const Dashboard = () => {
     []
   )
 
-  const handleSort = useCallback(
-    () => dispatch({ type: ACTION_TYPES.SORT, payload: state.sort === 'asc' ? 'desc' : 'asc' }),
-    [state.sort]
+  const handleFilterGenre = useCallback(
+    (value) => dispatch({ type: ACTION_TYPES.FILTER_GENRE, payload: value }),
+    []
   )
 
-  // Fix: era "donasCount" (typo)
-  const doneCount = state.items.filter((t) => t.done).length
-  const pendingCount = state.items.length - doneCount
+  const handleSort = useCallback(
+    (value) => dispatch({ type: ACTION_TYPES.SORT, payload: value }),
+    []
+  )
+
+  // ── Stats del estado ──────────────────────────────────────
+  const watchedCount  = state.items.filter((m) => m.watched).length
+  const pendingCount  = state.items.length - watchedCount
 
   return (
     <div className={`dashboard ${theme}`}>
+
+      {/* ── Header ── */}
       <header className="dashboard-header">
-        <h1>Gestor de Tareas</h1>
+        <div className="header-title">
+          <span className="header-icon">🎬</span>
+          <h1>CineTracker</h1>
+        </div>
         <button onClick={toggleTheme} className="btn-theme">
-          {theme === 'light' ? '🌙 Modo Oscuro' : '☀️ Modo Claro'}
+          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
         </button>
       </header>
 
-      {/* Formulario agregar tarea */}
-      <div className="add-task">
+      {/* ── Stats ── */}
+      <div className="stats-bar">
+        <span className="stat">🎞️ Total <strong>{state.items.length}</strong></span>
+        <span className="stat">✅ Vistas <strong>{watchedCount}</strong></span>
+        <span className="stat">⏳ Pendientes <strong>{pendingCount}</strong></span>
+      </div>
+
+      {/* ── Formulario agregar ── */}
+      <div className="add-form">
         <input
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          placeholder="Nueva tarea..."
-          className="input-task"
-          aria-label="Título de la tarea"
+          placeholder="Nombre de película o serie..."
+          className="input-title"
+          aria-label="Título"
         />
         <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="select-priority"
-          aria-label="Prioridad"
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+          className="select-field"
+          aria-label="Género"
         >
-          <option value="alta">Alta</option>
-          <option value="media">Media</option>
-          <option value="baja">Baja</option>
+          {GENRES.map((g) => (
+            <option key={g} value={g}>{GENRE_ICONS[g]} {g}</option>
+          ))}
         </select>
-        <button onClick={handleAdd} className="btn-add">Agregar</button>
+        <StarRating value={rating} onChange={setRating} />
+        <button onClick={handleAdd} className="btn-add">+ Agregar</button>
       </div>
 
-      {/* Controles filtro y ordenamiento */}
-      <div className="controls">
-        <button
-          onClick={() => handleFilter('all')}
-          className={state.filter === 'all' ? 'active' : ''}
-        >
-          Todas ({state.items.length})
-        </button>
-        <button
-          onClick={() => handleFilter('pending')}
-          className={state.filter === 'pending' ? 'active' : ''}
-        >
-          Pendientes ({pendingCount})
-        </button>
-        <button
-          onClick={() => handleFilter('done')}
-          className={state.filter === 'done' ? 'active' : ''}
-        >
-          Completadas ({doneCount})
-        </button>
-        <button onClick={handleSort} className="btn-sort">
-          {state.sort === 'asc' ? '↑ A→Z' : '↓ Z→A'}
-        </button>
+      {/* ── Filtros y ordenamiento ── */}
+      <div className="toolbar">
+        <div className="filter-group">
+          {[
+            { value: 'all',     label: `Todas (${state.items.length})` },
+            { value: 'watched', label: `Vistas (${watchedCount})` },
+            { value: 'pending', label: `Pendientes (${pendingCount})` },
+          ].map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => handleFilter(value)}
+              className={state.filter === value ? 'active' : ''}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="sort-group">
+          <select
+            value={state.genre}
+            onChange={(e) => handleFilterGenre(e.target.value)}
+            className="select-field"
+            aria-label="Filtrar por género"
+          >
+            <option value="all">🎬 Todos los géneros</option>
+            {GENRES.map((g) => (
+              <option key={g} value={g}>{GENRE_ICONS[g]} {g}</option>
+            ))}
+          </select>
+
+          <select
+            value={state.sort}
+            onChange={(e) => handleSort(e.target.value)}
+            className="select-field"
+            aria-label="Ordenar por"
+          >
+            <option value="rating">⭐ Mayor rating</option>
+            <option value="title-asc">🔤 Título A→Z</option>
+            <option value="title-desc">🔤 Título Z→A</option>
+          </select>
+        </div>
       </div>
 
-      {state.items.length === 0 && (
-        <p className="empty-msg">No hay tareas. ¡Agrega una!</p>
+      {/* ── Lista ── */}
+      {state.items.length === 0 ? (
+        <div className="empty-state">
+          <p>🍿 Tu watchlist está vacía</p>
+          <small>Agrega tu primera película arriba</small>
+        </div>
+      ) : (
+        <MovieList
+          movies={state.items}
+          filter={state.filter}
+          genre={state.genre}
+          sort={state.sort}
+          onRemove={handleRemove}
+          onToggle={handleToggle}
+        />
       )}
 
-      <TaskList
-        tasks={state.items}
-        filter={state.filter}
-        sort={state.sort}
-        onRemove={handleRemove}
-        onToggle={handleToggle}
-      />
     </div>
   )
 }
